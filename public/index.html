@@ -147,16 +147,19 @@
           <input type="url" id="scriptUrl" dir="ltr" required placeholder="https://raw.githubusercontent.com/.../worker.js" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm focus:border-orange-500 focus:outline-none text-left" />
         </div>
 
-        <!-- سوئیچ مبهم‌سازی کد -->
+        <!-- سوئیچ مبهم‌سازی کد به همراه پیام قفل ناهان -->
         <div class="pt-2">
-          <label class="flex items-center justify-between p-3.5 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
+          <label id="obfuscationLabel" class="flex items-center justify-between p-3.5 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
             <div class="flex flex-col ml-3">
-              <span class="text-sm font-medium text-slate-200">مبهم‌سازی سورس کد (Code Obfuscator)</span>
-              <span class="text-[11px] text-slate-500">رمزنگاری رشته‌ها با XOR/Base64 برای جلوگیری از خوانده‌شدن آسان سورس کد</span>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-slate-200">مبهم‌سازی سورس کد (Code Obfuscator)</span>
+                <span id="nahanObfBadge" class="hidden text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-sans font-medium">سورس کد نهان از پیش مبهم‌سازی شده است</span>
+              </div>
+              <span id="obfSubtext" class="text-[11px] text-slate-500 mt-0.5">رمزنگاری رشته‌ها با XOR/Base64 برای جلوگیری از خوانده‌شدن سورس کد</span>
             </div>
             <div class="relative shrink-0 flex items-center">
               <input type="checkbox" id="enableObfuscation" class="sr-only peer" checked>
-              <div class="w-11 h-6 bg-slate-800 rounded-full peer peer-checked:bg-orange-500 transition-colors after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:-translate-x-5"></div>
+              <div class="w-11 h-6 bg-slate-800 rounded-full peer peer-checked:bg-orange-500 peer-disabled:opacity-40 peer-disabled:cursor-not-allowed transition-colors after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:-translate-x-5"></div>
             </div>
           </label>
         </div>
@@ -672,9 +675,28 @@
       // بارگذاری کامل تنظیمات الگو
       document.getElementById('scriptUrl').value = p.url;
       document.getElementById('bindingName').value = p.binding;
-      document.getElementById('enableObfuscation').checked = p.obfuscate;
       document.getElementById('recreateWorker').checked = p.recreate;
       document.getElementById('enableD1').checked = p.enableD1;
+
+      // قفل کردن مبهم‌سازی برای ناهان (چون از پیش انکود شده است)
+      const obfCheckbox = document.getElementById('enableObfuscation');
+      const nahanBadge = document.getElementById('nahanObfBadge');
+      const obfSubtext = document.getElementById('obfSubtext');
+      const obfLabel = document.getElementById('obfuscationLabel');
+
+      if (type === 'nahan') {
+        obfCheckbox.checked = false;
+        obfCheckbox.disabled = true;
+        nahanBadge.classList.remove('hidden');
+        obfSubtext.innerText = 'این سورس کد به صورت رسمی انکود شده است و نیازی به مبهم‌سازی مجدد ندارد.';
+        obfLabel.classList.add('opacity-80', 'cursor-not-allowed');
+      } else {
+        obfCheckbox.disabled = false;
+        obfCheckbox.checked = p.obfuscate;
+        nahanBadge.classList.add('hidden');
+        obfSubtext.innerText = 'رمزنگاری رشته‌ها با XOR/Base64 برای جلوگیری از خوانده‌شدن سورس کد';
+        obfLabel.classList.remove('opacity-80', 'cursor-not-allowed');
+      }
       
       // اگر روی سفارشی کلیک شد، نام دیتابیس خالی شود
       if (type === 'custom') {

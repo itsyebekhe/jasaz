@@ -192,7 +192,17 @@ URL: ${cfg.scriptUrl || p.url}
       if (parsed.act === "rnd_d1") cfg.d1Name = generateRandomName("db");
       if (parsed.act === "rnd_kv") cfg.kvName = generateRandomName("kv");
 
-      if (parsed.act === "tog_obf") parsed.obfuscate = !parsed.obfuscate;
+      if (parsed.act === "tog_obf") {
+        if (activePresetKey === "nahan") {
+          await tgApi(BOT_TOKEN, "answerCallbackQuery", {
+            callback_query_id: cq.id,
+            text: "سورس کد نهان از پیش مبهم‌سازی شده است و امکان تغییر ندارد.",
+            show_alert: true,
+          });
+          return new Response("OK");
+        }
+        parsed.obfuscate = !parsed.obfuscate;
+      }
       if (parsed.act === "tog_cln") parsed.recreate = !parsed.recreate;
       if (parsed.act === "tog_d1") parsed.d1 = !parsed.d1;
       if (parsed.act === "tog_kv") parsed.kv = !parsed.kv;
@@ -483,7 +493,10 @@ URL: ${scriptUrl}
         ]
       : []),
     [
-      { text: `مبهم‌سازی: ${state.obfuscate ? "روشن 🟢" : "خاموش ⚪"}`, callback_data: encodeAction("tog_obf", effectivePKey, obfFlag, clnFlag, d1Flag, kvFlag) },
+      {
+        text: effectivePKey === "nahan" ? "مبهم‌سازی: از پیش انکود شده 🔒" : `مبهم‌سازی: ${state.obfuscate ? "روشن 🟢" : "خاموش ⚪"}`,
+        callback_data: encodeAction("tog_obf", effectivePKey, obfFlag, clnFlag, d1Flag, kvFlag)
+      },
       { text: `نصب Clean: ${state.recreate ? "روشن 🟢" : "خاموش ⚪"}`, callback_data: encodeAction("tog_cln", effectivePKey, obfFlag, clnFlag, d1Flag, kvFlag) },
     ],
     [
