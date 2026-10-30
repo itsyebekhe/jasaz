@@ -6,7 +6,7 @@ const TOKEN_CREATE_URL = "https://dash.cloudflare.com/profile/api-tokens?permiss
 const PRESETS = {
   nahan: {
     title: "🛡️ نهان (Nahan)",
-    url: "https://raw.githubusercontent.com/itsyebekhe/nahan/refs/heads/main/worker.encode.js",
+    url: "https://raw.githubusercontent.com/itsyebekhe/nahan/refs/heads/main/worker.encoded.js",
     binding: "IOT_DB",
     obfuscate: 0,
     recreate: 1,
