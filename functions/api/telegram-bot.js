@@ -12,6 +12,14 @@ const PRESETS = {
     recreate: 1,
     d1: 1,
   },
+  nahanmini: {
+    title: "🌿 نهان‌مینی (NahanMini)",
+    url: "https://raw.githubusercontent.com/itsyebekhe/NahanMini/main/src/worker.js",
+    binding: "DB",
+    obfuscate: 1,
+    recreate: 1,
+    d1: 1,
+  },
   zeus: {
     title: "⚡ زئوس (Zeus)",
     url: "https://raw.githubusercontent.com/panel-zeus/Z-E-U-S/refs/heads/main/Source.js",
@@ -248,9 +256,12 @@ URL: ${cfg.scriptUrl || p.url}
           let extraTips = "";
 
           if (panelUrl) {
-            if (activePresetKey === "nahan") {
+           if (activePresetKey === "nahan") {
               panelUrl = panelUrl.replace(/\/+$/, "") + "/sync/dash";
               extraTips = "\n🔑 <b>رمز عبور پیش‌فرض ورود به پنل نهان:</b> <code>admin</code>";
+            } else if (activePresetKey === "nahanmini") {
+              panelUrl = panelUrl.replace(/\/+$/, "") + "/login";
+              extraTips = "\n🔑 <b>رمز عبور پیش‌فرض ورود به پنل نهان‌مینی:</b> <code>admin123</code>";
             } else if (activePresetKey === "zeus") {
               panelUrl = panelUrl.replace(/\/+$/, "") + "/panel";
             }
@@ -331,7 +342,10 @@ ${extraTips}
                 { text: "⚡ زئوس (Zeus)", callback_data: "pre:zeus" },
                 { text: "🛡️ نهان (Nahan)", callback_data: "pre:nahan" },
               ],
-              [{ text: "🛠️ سورس سفارشی (Custom)", callback_data: "pre:custom" }],
+              [
+                { text: "🌿 نهان‌مینی (NahanMini)", callback_data: "pre:nahanmini" },
+                { text: "🛠️ سورس سفارشی (Custom)", callback_data: "pre:custom" },
+              ],
               [
                 { text: "📡 ربات Zeta (کلین IP)", url: "https://t.me/itsZetaBot" },
                 { text: "🌐 ربات Proxy IP رله", url: "https://t.me/nahanproxyipbot" },
@@ -389,6 +403,8 @@ ${extraTips}
         if (PRESETS[detected]) {
           presetKey = detected;
         }
+      } else if (/نهان‌مینی|nahanmini/i.test(replyTo)) {
+        presetKey = "nahanmini";
       } else if (/نهان|nahan/i.test(replyTo)) {
         presetKey = "nahan";
       } else if (/زئوس|zeus/i.test(replyTo)) {

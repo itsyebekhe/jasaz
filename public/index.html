@@ -114,11 +114,16 @@
             <span class="w-2 h-2 rounded-full bg-orange-500"></span>
             <span>الگوی آماده پروژه (انتخاب سریع تنظیمات):</span>
           </label>
-          <div class="grid grid-cols-3 gap-2">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <button type="button" onclick="selectPreset('nahan')" id="btn-preset-nahan" class="p-2.5 rounded-xl border border-orange-500 bg-orange-500/10 transition text-center flex flex-col items-center justify-center gap-1 cursor-pointer">
               <span class="text-base">🛡️</span>
               <span class="text-xs font-bold text-orange-400">نهان (Nahan)</span>
               <span class="text-[9px] text-slate-500">IOT_DB</span>
+            </button>
+            <button type="button" onclick="selectPreset('nahanmini')" id="btn-preset-nahanmini" class="p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-orange-500/60 transition text-center flex flex-col items-center justify-center gap-1 cursor-pointer">
+              <span class="text-base">🌿</span>
+              <span class="text-xs font-bold text-slate-200">نهان‌مینی (Mini)</span>
+              <span class="text-[9px] text-slate-500">DB</span>
             </button>
             <button type="button" onclick="selectPreset('zeus')" id="btn-preset-zeus" class="p-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:border-orange-500/60 transition text-center flex flex-col items-center justify-center gap-1 cursor-pointer">
               <span class="text-base">⚡</span>
@@ -637,6 +642,13 @@
         recreate: true,
         enableD1: true,
       },
+      nahanmini: {
+        url: 'https://raw.githubusercontent.com/itsyebekhe/NahanMini/main/src/worker.js',
+        binding: 'DB',
+        obfuscate: true,
+        recreate: true,
+        enableD1: true,
+      },
       zeus: {
         url: 'https://raw.githubusercontent.com/panel-zeus/Z-E-U-S/refs/heads/main/Source.js',
         binding: 'DB',
@@ -658,7 +670,7 @@
       if (!p) return;
 
       // هایلایت دکمه‌ها
-      ['nahan', 'zeus', 'custom'].forEach(t => {
+      ['nahan', 'nahanmini', 'zeus', 'custom'].forEach(t => {
         const btn = document.getElementById(`btn-preset-${t}`);
         if (!btn) return;
         if (t === type) {
@@ -1257,15 +1269,18 @@ ${JSON.stringify(allStringsList, null, 2)}
           const currentBinding = document.getElementById('bindingName').value.trim();
           const currentUrl = document.getElementById('scriptUrl').value.trim();
 
+          const isNahanMini = currentUrl.includes('NahanMini') || currentUrl.includes('nahanmini');
+          const isNahan = !isNahanMini && (currentBinding === 'IOT_DB' || currentUrl.includes('nahan'));
+
           if (panelUrl) {
-            if (currentBinding === 'IOT_DB' || currentUrl.includes('nahan')) {
+            if (isNahanMini) {
+              panelUrl = panelUrl.replace(/\/+$/, '') + '/login';
+            } else if (isNahan) {
               panelUrl = panelUrl.replace(/\/+$/, '') + '/sync/dash';
             } else if (currentBinding === 'DB' || currentUrl.includes('zeus') || currentUrl.includes('Z-E-U-S')) {
               panelUrl = panelUrl.replace(/\/+$/, '') + '/panel';
             }
           }
-
-          let isNahan = currentBinding === 'IOT_DB' || currentUrl.includes('nahan');
 
           let html = `
             <div class="flex items-center gap-2 text-sm font-bold text-emerald-300 mb-2">
@@ -1277,6 +1292,7 @@ ${JSON.stringify(allStringsList, null, 2)}
               <div>مبهم‌سازی سورس: <span class="text-white">${result.obfuscated ? 'فعال شد' : 'غیرفعال'}</span></div>
               ${result.d1DatabaseId ? `<div>دیتابیس D1 متصل شد (UUID): <span class="font-mono text-emerald-400">${result.d1DatabaseId}</span></div>` : '<div>دیتابیس D1: بدون دیتابیس</div>'}
               ${isNahan ? `<div class="mt-2 p-2 bg-emerald-900/60 border border-emerald-600/50 rounded-lg text-emerald-100 font-sans">🔑 <b>رمز عبور پیش‌فرض پنل نهان:</b> <code class="bg-black/40 px-1.5 py-0.5 rounded text-orange-300 select-all font-mono">admin</code></div>` : ''}
+              ${isNahanMini ? `<div class="mt-2 p-2 bg-emerald-900/60 border border-emerald-600/50 rounded-lg text-emerald-100 font-sans">🔑 <b>رمز عبور پیش‌فرض پنل نهان‌مینی:</b> <code class="bg-black/40 px-1.5 py-0.5 rounded text-orange-300 select-all font-mono">admin123</code></div>` : ''}
             </div>
           `;
 
