@@ -156,7 +156,7 @@ function func_dec(idx) {
   return runtimeHeader + "\n" + output;
 }
 
-export async function deployWorker({ accountId, apiToken, workerName, scriptUrl, d1Name, bindingName, kvName, kvBindingName, enableObfuscation, recreateWorker }) {
+export async function deployWorker({ accountId, apiToken, workerName, scriptUrl, d1Name, bindingName, kvName, kvBindingName, enableObfuscation, recreateWorker, customDomain }) {
   if (!accountId || !apiToken || !workerName || !scriptUrl) {
     throw new Error("فیلدهای اجباری (Account ID، Token، نام ورکر و آدرس سورس) ناقص هستند.");
   }
@@ -298,10 +298,39 @@ export async function deployWorker({ accountId, apiToken, workerName, scriptUrl,
     }
   } catch (_) {}
 
+  // ۷. اتصال دامنه اختصاصی (Custom Domain)
+  let customDomainUrl = null;
+  let customDomainError = null;
+
+  if (customDomain && customDomain.trim()) {
+    const cleanDomain = customDomain.toLowerCase().trim().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+    try {
+      const domainRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/domains`, {
+        method: "PUT",
+        headers: { ...cfHeaders, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          environment: "production",
+          hostname: cleanDomain,
+          service: workerName,
+        }),
+      });
+      const domainData = await domainRes.json();
+      if (domainData.success) {
+        customDomainUrl = `https://${cleanDomain}`;
+      } else {
+        customDomainError = domainData.errors?.[0]?.message || "خطا در اتصال دامنه به ورکر";
+      }
+    } catch (err) {
+      customDomainError = err.message;
+    }
+  }
+
   return {
     success: true,
     workerName,
     workerUrl,
+    customDomainUrl,
+    customDomainError,
     d1DatabaseId,
     kvNamespaceId,
     obfuscated: !!enableObfuscation,

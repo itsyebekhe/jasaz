@@ -152,6 +152,27 @@
           <input type="url" id="scriptUrl" dir="ltr" required placeholder="https://raw.githubusercontent.com/.../worker.js" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm focus:border-orange-500 focus:outline-none text-left" />
         </div>
 
+        <!-- فیلد دامنه اختصاصی به همراه راهنمای کامل -->
+        <div class="space-y-2 pt-1">
+          <label class="block text-xs font-medium text-slate-400">
+            دامنه یا ساب‌دامنه اختصاصی ورکر (Custom Domain - اختیاری)
+          </label>
+          <input type="text" id="customDomain" dir="ltr" placeholder="مثال: sub.yourdomain.com یا panel.mydomain.ir" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm font-mono text-slate-200 focus:border-orange-500 focus:outline-none text-left" />
+
+          <!-- باکس راهنمای پیش‌نیاز ثبت دامنه در کلودفلر -->
+          <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-300 leading-relaxed space-y-1.5">
+            <div class="font-bold flex items-center gap-1 text-amber-400">
+              <span>⚠️</span>
+              <span>راهنمای مهم اتصال دامنه اختصاصی:</span>
+            </div>
+            <ol class="list-decimal list-inside space-y-1 text-[11px] text-amber-200/90 pr-1">
+              <li><strong>ثبت دامنه اصلی در کلودفلر:</strong> دامنه والد شما (مثلاً <code>yourdomain.com</code>) باید از قبل در پنل همین اکانت کلودفلر ادد شده و فعال (Active) باشد.</li>
+              <li><strong>تعریف ساب‌دامنه دلخواه:</strong> در کادر بالا یک ساب‌دامنه دلخواه (مانند <code>panel.yourdomain.com</code>) وارد کنید. نیازی به ساخت دستی رکورد DNS نیست؛ کلودفلر خودکار آن را به ورکر متصل و SSL صادر می‌کند.</li>
+              <li><strong>دور زدن فیلترینگ workers.dev:</strong> با اتصال دامنه اختصاصی، دیگر با مشکل فیلتر بودن دامنه پیش‌فرض کلودفلر مواجه نخواهید شد.</li>
+            </ol>
+          </div>
+        </div>
+
         <!-- سوئیچ مبهم‌سازی کد به همراه پیام قفل ناهان -->
         <div class="pt-2">
           <label id="obfuscationLabel" class="flex items-center justify-between p-3.5 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
@@ -251,6 +272,10 @@
           <div class="flex justify-between py-1 border-b border-slate-900">
             <span class="text-slate-500">نحوه استقرار ورکر:</span>
             <span id="reviewRecreate" class="font-mono text-slate-300">-</span>
+          </div>
+          <div class="flex justify-between py-1 border-b border-slate-900">
+            <span class="text-slate-500">دامنه اختصاصی:</span>
+            <span id="reviewCustomDomain" class="font-mono text-orange-400">غیرفعال</span>
           </div>
           <div class="flex justify-between py-1 border-b border-slate-900">
             <span class="text-slate-500">دیتابیس D1:</span>
@@ -1173,6 +1198,8 @@ ${JSON.stringify(allStringsList, null, 2)}
         document.getElementById('reviewWorkerName').innerText = document.getElementById('workerName').value || '-';
         document.getElementById('reviewObfuscation').innerText = document.getElementById('enableObfuscation').checked ? 'فعال (رمزگذاری با XOR)' : 'غیرفعال (کد خام)';
         document.getElementById('reviewRecreate').innerText = document.getElementById('recreateWorker').checked ? 'نصب مجدد از صفر (Clean Rebuild)' : 'بروزرسانی مستقیم ورکر';
+        const cDom = document.getElementById('customDomain').value.trim();
+        document.getElementById('reviewCustomDomain').innerText = cDom || 'غیرفعال';
         const d1Active = document.getElementById('enableD1').checked;
         document.getElementById('reviewD1Status').innerText = d1Active 
           ? `${document.getElementById('d1Name').value} (متغیر بایندینگ: ${document.getElementById('bindingName').value})` 
@@ -1236,6 +1263,7 @@ ${JSON.stringify(allStringsList, null, 2)}
         apiToken: document.getElementById('apiToken').value.trim(),
         workerName: document.getElementById('workerName').value.trim(),
         scriptUrl: document.getElementById('scriptUrl').value.trim(),
+        customDomain: document.getElementById('customDomain').value.trim() || null,
         enableObfuscation: document.getElementById('enableObfuscation').checked,
         recreateWorker: document.getElementById('recreateWorker').checked,
         d1Name: document.getElementById('enableD1').checked ? document.getElementById('d1Name').value.trim() : null,
@@ -1296,19 +1324,44 @@ ${JSON.stringify(allStringsList, null, 2)}
             </div>
           `;
 
-          if (panelUrl) {
+          // اولویت دادن به آدرس دامنه اختصاصی نسبت به workers.dev
+          const primaryHost = result.customDomainUrl || result.workerUrl;
+          let panelPrimaryUrl = primaryHost;
+
+          if (panelPrimaryUrl) {
+            if (isNahanMini) {
+              panelPrimaryUrl = panelPrimaryUrl.replace(/\/+$/, '') + '/login';
+            } else if (isNahan) {
+              panelPrimaryUrl = panelPrimaryUrl.replace(/\/+$/, '') + '/sync/dash';
+            } else if (currentBinding === 'DB' || currentUrl.includes('zeus') || currentUrl.includes('Z-E-U-S')) {
+              panelPrimaryUrl = panelPrimaryUrl.replace(/\/+$/, '') + '/panel';
+            }
+          }
+
+          if (result.customDomainError) {
+            html += `
+              <div class="mt-2 p-2 bg-amber-950/60 border border-amber-800 text-amber-200 rounded-lg text-xs">
+                ⚠️ هشدار دامنه اختصاصی: ${result.customDomainError} (می‌توانید از دامنه workers.dev استفاده کنید).
+              </div>
+            `;
+          }
+
+          if (panelPrimaryUrl) {
             html += `
               <div class="mt-4 pt-3 border-t border-emerald-800/60">
-                <div class="text-xs text-slate-300 mb-1.5 font-medium">آدرس ورود به پنل مدیریت:</div>
+                <div class="text-xs text-slate-300 mb-1.5 font-medium flex items-center justify-between">
+                  <span>آدرس ورود به پنل مدیریت:</span>
+                  ${result.customDomainUrl ? '<span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono">Custom Domain ✓</span>' : ''}
+                </div>
                 <div dir="ltr" class="flex items-center justify-between bg-slate-900 border border-slate-700/80 rounded-lg p-2 gap-2">
-                  <a href="${panelUrl}" target="_blank" rel="noopener noreferrer" class="text-xs font-mono text-orange-400 hover:underline truncate">
-                    ${panelUrl}
+                  <a href="${panelPrimaryUrl}" target="_blank" rel="noopener noreferrer" class="text-xs font-mono text-orange-400 hover:underline truncate">
+                    ${panelPrimaryUrl}
                   </a>
                   <div class="flex items-center gap-1 shrink-0">
-                    <button type="button" onclick="copyToClipboard('${panelUrl}', this)" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 px-2.5 py-1 rounded transition">
+                    <button type="button" onclick="copyToClipboard('${panelPrimaryUrl}', this)" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 px-2.5 py-1 rounded transition">
                       کپی آدرس
                     </button>
-                    <a href="${panelUrl}" target="_blank" rel="noopener noreferrer" class="text-xs bg-orange-500 hover:bg-orange-600 text-white px-2.5 py-1 rounded transition">
+                    <a href="${panelPrimaryUrl}" target="_blank" rel="noopener noreferrer" class="text-xs bg-orange-500 hover:bg-orange-600 text-white px-2.5 py-1 rounded transition">
                       ورود به پنل
                     </a>
                   </div>
